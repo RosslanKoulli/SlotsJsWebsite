@@ -1,16 +1,23 @@
-// Game configuration
+// Game configuration with neon-themed symbols
 const SYMBOLS_COUNT = {
-    "A": 2,
-    "B": 4,
-    "C": 6,
-    "D": 8
+    "🔮": 2,  // Purple orb (rare, high value)
+    "💎": 4,  // Diamond (uncommon, good value)
+    "⚡": 6,  // Lightning bolt (common, medium value)
+    "💫": 8   // Star (very common, low value)
 };
 
 const SYMBOL_VALUES = {
-    "A": 5,
-    "B": 4,
-    "C": 3,
-    "D": 2
+    "🔮": 5,  // 5x multiplier
+    "💎": 4,  // 4x multiplier
+    "⚡": 3,  // 3x multiplier
+    "💫": 2   // 2x multiplier
+};
+
+const SYMBOL_NAMES = {
+    "🔮": "Purple Orb",
+    "💎": "Diamond",
+    "⚡": "Lightning Bolt",
+    "💫": "Star"
 };
 
 const ROWS = 3;
@@ -18,103 +25,127 @@ const COLS = 3;
 
 // Game state
 let balance = 0;
+let spinHistory = [];
 
-// DOM Elements
-const balanceDisplay = document.getElementById('balance');
-const depositInput = document.getElementById('deposit');
-const depositBtn = document.getElementById('depositBtn');
-const betLinesInput = document.getElementById('betLines');
-const betAmountInput = document.getElementById('betAmount');
-const spinBtn = document.getElementById('spinBtn');
-const slotDisplay = document.getElementById('slotDisplay');
-const messageDisplay = document.getElementById('message');
-
-// Initialize game
-function init() {
-
-    console.log('Game initializing...'); // Debug log
+// Wait for the page to fully load
+window.onload = function() {
+    console.log("Finding Fortune game loaded"); // Debug log
     
-    // Verify DOM elements are found
-    console.log('Deposit button found:', depositBtn !== null);
-    console.log('Deposit input found:', depositInput !== null);
+    // Get DOM elements
+    const balanceDisplay = document.getElementById('balance');
+    const depositInput = document.getElementById('deposit');
+    const depositBtn = document.getElementById('depositBtn');
+    const betLinesInput = document.getElementById('betLines');
+    const betAmountInput = document.getElementById('betAmount');
+    const spinBtn = document.getElementById('spinBtn');
+    const slotDisplay = document.getElementById('slotDisplay');
+    const messageDisplay = document.getElementById('message');
 
-    // Check for existing balance in localStorage
-    const savedBalance = localStorage.getItem('slotBalance');
-    if (savedBalance) {
-        balance = parseInt(savedBalance);
-        updateBalance();
+    // Initialize empty slot display
+    initializeSlotDisplay();
+
+    // Add direct click handler to deposit button
+    depositBtn.onclick = function() {
+        console.log("Deposit button clicked"); // Debug log
+        const amount = parseInt(depositInput.value);
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid deposit amount');
+            return;
+        }
+
+        balance = amount;
+        balanceDisplay.textContent = balance;
         spinBtn.disabled = false;
         depositInput.disabled = true;
         depositBtn.disabled = true;
-    }
+        
+        // Save to localStorage
+        localStorage.setItem('slotBalance', balance.toString());
+        messageDisplay.textContent = `$${amount} deposited! You're ready to spin!`;
+        messageDisplay.className = 'message';
+    };
 
-    // Add event listeners with error handling
-    if (depositBtn) {
-        depositBtn.addEventListener('click', function(e) {
-            console.log('Deposit button clicked'); // Debug log
-            handleDeposit();
+    // Add direct click handler to spin button
+    spinBtn.onclick = function() {
+        const lines = parseInt(betLinesInput.value);
+        const bet = parseInt(betAmountInput.value);
+
+        if (isNaN(bet) || bet <= 0 || isNaN(lines) || lines < 1 || lines > 3) {
+            alert('Please enter valid bet amount and number of lines');
+            return;
+        }
+
+        const totalBet = bet * lines;
+        if (totalBet > balance) {
+            alert('Insufficient funds');
+            return;
+        }
+
+        // Visual animation effect for spinning
+        animateSpinning().then(() => {
+            // Deduct bet
+            balance -= totalBet;
+            balanceDisplay.textContent = balance;
+            localStorage.setItem('slotBalance', balance.toString());
+
+            // Generate and display results
+            const reels = generateReels();
+            const rows = transpose(reels);
+            displayResults(rows);
+
+            // Calculate winnings
+            const winnings = calculateWinnings(rows, bet, lines);
+            
+            if (winnings > 0) {
+                balance += winnings;
+                balanceDisplay.textContent = balance;
+                localStorage.setItem('slotBalance', balance.toString());
+                messageDisplay.textContent = `You won $${winnings}!`;
+                messageDisplay.className = 'message win';
+                
+                // Log win to history
+                spinHistory.push({
+                    bet: totalBet,
+                    lines: lines,
+                    result: 'win',
+                    winnings: winnings,
+                    balance: balance
+                });
+            } else {
+                messageDisplay.textContent = 'Try again!';
+                messageDisplay.className = 'message lose';
+                
+                // Log loss to history
+                spinHistory.push({
+                    bet: totalBet,
+                    lines: lines,
+                    result: 'loss',
+                    winnings: 0,
+                    balance: balance
+                });
+            }
+
+            if (balance <= 0) {
+                spinBtn.disabled = true;
+                messageDisplay.textContent = 'Game Over! Refresh to play again.';
+            }
         });
+    };
+
+    // Check for existing balance
+    const savedBalance = localStorage.getItem('slotBalance');
+    if (savedBalance) {
+        balance = parseInt(savedBalance);
+        balanceDisplay.textContent = balance;
+        spinBtn.disabled = false;
+        depositInput.disabled = true;
+        depositBtn.disabled = true;
+        messageDisplay.textContent = 'Welcome back! Continue your game.';
     }
+};
 
-
-    if (spinBtn) {
-        spinBtn.addEventListener('click', function(e) {
-            console.log('Spin button clicked'); // Debug log
-            handleSpin();
-        });
-    }
-}
-
-// Handle initial deposit
-function handleDeposit() {
-    console.log('Handling deposit...'); // Debug log
-    const amount = parseInt(depositInput.value);
-    console.log('Deposit amount:', amount); // Debug log
-
-    if (isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid deposit amount');
-        return;
-    }
-
-    balance = amount;
-    updateBalance();
-    spinBtn.disabled = false;
-    depositInput.disabled = true;
-    depositBtn.disabled = true;
-}
-
-// Handle spin
-function handleSpin() {
-    const lines = parseInt(betLinesInput.value);
-    const bet = parseInt(betAmountInput.value);
-
-    if (isNaN(bet) || bet <= 0 || isNaN(lines) || lines < 1 || lines > 3) {
-        alert('Please enter valid bet amount and number of lines');
-        return;
-    }
-
-    const totalBet = bet * lines;
-    if (totalBet > balance) {
-        alert('Insufficient funds');
-        return;
-    }
-
-    // Deduct bet
-    balance -= totalBet;
-    updateBalance();
-
-    // Generate and display results
-    const reels = spin();
-    const rows = transpose(reels);
-    displaySlots(rows);
-
-    // Calculate and handle winnings
-    const winnings = getWinnings(rows, bet, lines);
-    handleWinnings(winnings);
-}
-
-// Generate reels
-function spin() {
+// Helper functions
+function generateReels() {
     const symbols = [];
     for (const [symbol, count] of Object.entries(SYMBOLS_COUNT)) {
         for (let i = 0; i < count; i++) {
@@ -137,7 +168,6 @@ function spin() {
     return reels;
 }
 
-// Transpose matrix
 function transpose(reels) {
     const rows = [];
     for (let i = 0; i < ROWS; i++) {
@@ -149,56 +179,101 @@ function transpose(reels) {
     return rows;
 }
 
-// Display slots
-function displaySlots(rows) {
-    slotDisplay.innerHTML = rows
-        .map(row => row.join(' | '))
-        .join('<br>');
+function initializeSlotDisplay() {
+    const display = document.getElementById('slotDisplay');
+    display.innerHTML = '';
+    
+    for (let i = 0; i < ROWS; i++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'slot-row';
+        
+        for (let j = 0; j < COLS; j++) {
+            const symbolDiv = document.createElement('div');
+            symbolDiv.className = 'slot-symbol';
+            symbolDiv.textContent = '?';
+            rowDiv.appendChild(symbolDiv);
+        }
+        
+        display.appendChild(rowDiv);
+    }
 }
 
-// Calculate winnings
-function getWinnings(rows, bet, lines) {
+function displayResults(rows) {
+    const display = document.getElementById('slotDisplay');
+    display.innerHTML = '';
+    
+    rows.forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'slot-row';
+        
+        row.forEach(symbol => {
+            const symbolDiv = document.createElement('div');
+            symbolDiv.className = 'slot-symbol';
+            symbolDiv.textContent = symbol;
+            rowDiv.appendChild(symbolDiv);
+        });
+        
+        display.appendChild(rowDiv);
+    });
+}
+
+function calculateWinnings(rows, bet, lines) {
     let winnings = 0;
+    
+    // Track which rows won for highlighting
+    const winningRows = [];
+    
     for (let row = 0; row < lines; row++) {
         const symbols = rows[row];
         const allSame = symbols.every(symbol => symbol === symbols[0]);
         
         if (allSame) {
             winnings += bet * SYMBOL_VALUES[symbols[0]];
+            winningRows.push(row);
         }
     }
+    
+    // Highlight winning rows with a slight delay for effect
+    setTimeout(() => {
+        const slotRows = document.querySelectorAll('.slot-row');
+        
+        winningRows.forEach(rowIndex => {
+            if (slotRows[rowIndex]) {
+                const symbolDivs = slotRows[rowIndex].querySelectorAll('.slot-symbol');
+                symbolDivs.forEach(div => {
+                    div.classList.add('highlight');
+                });
+            }
+        });
+    }, 300);
+    
     return winnings;
 }
 
-// Handle winnings
-function handleWinnings(winnings) {
-    balance += winnings;
-    updateBalance();
-
-    if (winnings > 0) {
-        messageDisplay.textContent = `You won $${winnings}!`;
-        messageDisplay.className = 'message win';
-    } else {
-        messageDisplay.textContent = 'Try again!';
-        messageDisplay.className = 'message lose';
-    }
-
-    // Check if game over
-    if (balance <= 0) {
-        spinBtn.disabled = true;
-        messageDisplay.textContent = 'Game Over! Refresh to play again.';
-        messageDisplay.className = 'message lose';
-    }
+// Animation function for spinning effect
+function animateSpinning() {
+    return new Promise(resolve => {
+        const display = document.getElementById('slotDisplay');
+        const allSymbols = Object.keys(SYMBOLS_COUNT);
+        let count = 0;
+        
+        const interval = setInterval(() => {
+            display.querySelectorAll('.slot-symbol').forEach(symbolDiv => {
+                const randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
+                symbolDiv.textContent = randomSymbol;
+            });
+            
+            count++;
+            if (count >= 10) {
+                clearInterval(interval);
+                resolve();
+            }
+        }, 100);
+    });
 }
 
-// Update balance display and localStorage
-function updateBalance() {
-    balanceDisplay.textContent = balance;
-    localStorage.setItem('slotBalance', balance.toString());
+// Function to reset the game (for demo purposes)
+function resetGame() {
+    localStorage.removeItem('slotBalance');
+    location.reload();
 }
-
-// Initialize game when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded'); // Debug log
-    init();
-});

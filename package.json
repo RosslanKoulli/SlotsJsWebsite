@@ -1,0 +1,19 @@
+{
+  "name": "slotsjswebsite",
+  "version": "1.0.0",
+  "description": "Dymaic website that intakes input of the user and allows the user to run content",
+  "main": "main.js",
+  "scripts": {
+    "test": "testCode"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RosslanKoulli/SlotsJsWebsite.git"
+  },
+  "author": "Rosslan Koulli",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RosslanKoulli/SlotsJsWebsite/issues"
+  },
+  "homepage": "https://github.com/RosslanKoulli/SlotsJsWebsite#readme"
+}

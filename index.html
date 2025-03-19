@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slot Machine Game</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Finding Fortune - Online Slot Machine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="/Images/neco_arc_emote_by_a_ngl_dfazbuy.png">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Slot Machine</h1>
+            <h1>Finding Fortune</h1>
             <div class="balance">Balance: $<span id="balance">0</span></div>
         </header>
 
@@ -17,7 +18,7 @@
             <div class="controls">
                 <div class="input-group">
                     <label for="deposit">Initial Deposit</label>
-                    <input type="number" id="deposit" min="1" step="1">
+                    <input type="number" id="deposit" min="1" step="1" placeholder="Enter amount">
                     <button id="depositBtn">Deposit</button>
                 </div>
 
@@ -28,7 +29,7 @@
 
                 <div class="input-group">
                     <label for="betAmount">Bet Per Line</label>
-                    <input type="number" id="betAmount" min="1" step="1">
+                    <input type="number" id="betAmount" min="1" step="1" placeholder="Enter bet amount">
                 </div>
 
                 <button id="spinBtn" disabled>SPIN</button>
@@ -39,7 +40,17 @@
             </div>
 
             <div id="message" class="message"></div>
+            
+            <div class="responsible-gaming">
+                <h3>Responsible Gaming</h3>
+                <p>Remember to always play responsibly and within your means. Online slots should be enjoyed as entertainment, not as a way to make money or deal with hardship in your life.</p>
+            </div>
         </main>
+        
+        <footer class="footer">
+            <p>© 2025 Finding Fortune by Rosslan Koulli.<em> This is a demo slot machine for entertainment purposes only.</em></p>
+            <p><a href="https://rosslan.dev/home.html">Return to Main Page</a></p>
+        </footer>
     </div>
     <script src="main.js"></script>
 </body>
