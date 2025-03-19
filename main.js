@@ -1,4 +1,4 @@
-// Game configuration with neon-themed symbols
+// Game configuration 
 const SYMBOLS_COUNT = {
     "🔮": 2,  // Purple orb (rare, high value)
     "💎": 4,  // Diamond (uncommon, good value)
